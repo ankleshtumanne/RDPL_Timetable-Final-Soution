@@ -454,12 +454,5 @@ curriculum.
 | AC-9 | Builds and runs from README; status + wall time reported | ✅ (verified offline, see `docs/VERIFICATION.md`) |
 | Bonus | L2, L3, H9, PR-MATH soft objective | ✅ · rooms / merged sections ✗ (no data) |
 
-## 14. Walkthrough (for the interview)
 
-1. `validate-data`: show the dataset audit (`dataConflicts` counts) and the 82 strict proofs.
-2. `TimetableModelBuilder`: `x/y/z/u` variables; H1 couples the sections; G1/H4 are structural.
-3. Strict run: INFEASIBLE with reasons, and why (odd block counts, 7 days of English in a 6-day week).
-4. Pragmatic run: what is relaxed, by how much (80 singles = minimum, 4 L1 overlaps = minimum), and how
-   validation is independent of the solver.
-5. Swapping in the real workbook, with no code change.
 
