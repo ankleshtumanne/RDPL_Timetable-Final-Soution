@@ -1,0 +1,22 @@
+namespace Rdpl.Timetable.Api.DTOs;
+
+/// <summary>One row of GET /api/timetable/runs.</summary>
+public sealed record RunListItemDto(
+    string Id,
+    string Kind,
+    string State,
+    string Profile,
+    DateTimeOffset CreatedUtc,
+    DateTimeOffset? CompletedUtc,
+    string? Outcome,
+    bool? Success,
+    string DataSourceKind,
+    bool UsesDummyData,
+    string? SolverStatus,
+    long? WallTimeMs,
+    bool? HardConstraintsSatisfied,
+    int? SectionsScheduled,
+    int? TotalSlotsScheduled,
+    int LessonCount,
+    int DataConflictCount,
+    int SchedulingConflictCount);

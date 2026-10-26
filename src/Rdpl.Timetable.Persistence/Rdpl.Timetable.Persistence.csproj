@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Rdpl.Timetable.Persistence</RootNamespace>
+    <AssemblyName>Rdpl.Timetable.Persistence</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      PostgreSQL provider for EF Core 8. Brings Microsoft.EntityFrameworkCore(.Relational) 8.0.11 and Npgsql 8.0.6.
+      This project deliberately does NOT reference Rdpl.Timetable.Core: the solver stays free of any database dependency,
+      and the CLI keeps working exactly as before.
+    -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Rdpl.Timetable.Tests" />
+  </ItemGroup>
+
+</Project>
