@@ -3,11 +3,6 @@ using Rdpl.Timetable.Api.DTOs;
 using Rdpl.Timetable.Api.Services.Interfaces;
 
 namespace Rdpl.Timetable.Api.Controllers;
-
-/// <summary>
-/// dataConflicts, schedulingConflicts and diagnostic violations of the latest run.
-/// Routes: /api/conflict and the original /api/timetable/conflicts.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]

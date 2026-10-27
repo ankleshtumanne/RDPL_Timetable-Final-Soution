@@ -1,6 +1,4 @@
 namespace Rdpl.Timetable.Api.DTOs;
-
-/// <summary>One row of GET /api/timetable/runs.</summary>
 public sealed record RunListItemDto(
     string Id,
     string Kind,

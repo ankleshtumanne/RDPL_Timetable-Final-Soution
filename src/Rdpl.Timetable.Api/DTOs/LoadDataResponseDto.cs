@@ -1,12 +1,5 @@
 using Rdpl.Timetable.Reporting;
-
 namespace Rdpl.Timetable.Api.DTOs;
-
-/// <summary>
-/// Response of POST /api/timetable/load-data. The report fields keep the original names and shapes
-/// (outcome, dataSource, rulesApplied, summary, dataConflicts, schedulingConflicts, assumptions);
-/// <see cref="RunId"/> and <see cref="Storage"/> are additions.
-/// </summary>
 public sealed record LoadDataResponseDto(
     string RunId,
     string Storage,

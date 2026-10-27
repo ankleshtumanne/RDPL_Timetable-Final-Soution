@@ -2,11 +2,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rdpl.Timetable.Persistence;
 
 namespace Rdpl.Timetable.Api.Health;
-
-/// <summary>
-/// Readiness probe for PostgreSQL. Reports only healthy/unhealthy; the exception is logged server-side and never
-/// returned to the caller (it can contain host names).
-/// </summary>
 public sealed class DatabaseHealthCheck : IHealthCheck
 {
     private readonly AppDbContext _db;

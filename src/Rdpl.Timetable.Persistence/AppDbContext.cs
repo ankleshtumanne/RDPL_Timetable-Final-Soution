@@ -52,7 +52,7 @@ public class AppDbContext : DbContext
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
-    /// <summary>Sets CreatedUtc/UpdatedUtc on master records. PostgreSQL timestamptz requires UTC offsets.</summary>
+    /// Sets CreatedUtc/UpdatedUtc on master records. PostgreSQL timestamptz requires UTC offsets.
     private void StampAuditColumns()
     {
         var now = DateTimeOffset.UtcNow;

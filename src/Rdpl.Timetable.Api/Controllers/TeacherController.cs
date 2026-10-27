@@ -6,7 +6,6 @@ namespace Rdpl.Timetable.Api.Controllers;
 
 /// <summary>
 /// Teacher-wise timetables of the latest completed generation.
-/// Routes: /api/teacher and the original /api/timetable/teachers.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]

@@ -2,13 +2,9 @@ using System.Text.Json;
 
 namespace Rdpl.Timetable.Api.DTOs;
 
-/// <summary>
-/// State of one run, returned by POST /api/timetable/generate (202) and GET /api/timetable/jobs/{id}.
-/// Same fields as before the controller refactoring; <see cref="Kind"/> and <see cref="Storage"/> are additions.
-/// </summary>
 public sealed record JobDto
 {
-    /// <summary>32 hex characters (Guid "N" format), unchanged from the original API.</summary>
+    /// <summary>32 hex characters (Guid "N" format)</summary>
     public required string Id { get; init; }
 
     /// <summary>RUNNING, COMPLETED or FAILED.</summary>
@@ -25,16 +21,12 @@ public sealed record JobDto
 
     public string? Outcome { get; init; }
 
-    /// <summary>User-safe failure message (never a stack trace).</summary>
     public string? Error { get; init; }
 
-    /// <summary>The report's "solver" object, verbatim.</summary>
     public JsonElement? Solver { get; init; }
 
-    /// <summary>The report's "summary" object, verbatim.</summary>
     public JsonElement? Summary { get; init; }
 
-    /// <summary>"postgresql" when results survive a restart, otherwise "memory".</summary>
     public required string Storage { get; init; }
 
     public required JobLinksDto Links { get; init; }

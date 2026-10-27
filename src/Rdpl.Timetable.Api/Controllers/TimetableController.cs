@@ -6,11 +6,6 @@ using Rdpl.Timetable.Api.Services.Interfaces;
 
 namespace Rdpl.Timetable.Api.Controllers;
 
-/// <summary>
-/// Timetable runs: load/validate input, start a generation, poll it, fetch the result, list runs.
-/// Routes are identical to the original minimal API (/api/timetable/...). Authentication: the global fallback policy
-/// (X-Api-Key) applies to every action. Errors are produced by the centralized SafeExceptionHandler.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]

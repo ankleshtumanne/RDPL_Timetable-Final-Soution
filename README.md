@@ -10,14 +10,17 @@ teacher timetables, `dataConflicts` and `schedulingConflicts`. Console host and 
 * The brief is met by Core (CP-SAT model, validator, report) + CLI + Web API. Nothing in it depends on a database.
 * PostgreSQL persistence is **optional and off by default** (`Persistence:Enabled=false`); the brief lists it as
   not required. When enabled, it stores runs, lessons and conflicts so results survive a restart.
-* Schema is created with `database/01-create-database.sql` and `02-create-schema.sql`. EF Core migrations are future work.
+* **EF Core is integrated and migrated.** The schema is created by EF Core migrations
+  (`dotnet ef database update`, [§2.1](#21-postgresql-persistence-ef-core)). This was run against a local PostgreSQL
+  instance: the schema was created, the API was started with persistence on, and generated runs were stored and
+  read back from the database. `database/01-create-database.sql` still creates the roles, database and grants.
 * Original API routes and the report JSON are unchanged; new controller routes (`/api/section`, `/api/teacher`,
   `/api/conflict`) are additions.
 * With the supplied data the strict profile is **proven infeasible** (e.g. L1 needs 7 days for Class 11/12). The
   generated timetable uses the documented `pragmatic` profile (H5, and L1 for Class 11/12, become minimised soft rules).
 * OR-Tools `repair_hint` is not used: it intermittently crashed the native solver in testing.
 
-> **⚠ DUMMY ASSIGNMENT DATA.** `TEACHER_CLASS_ALLOCATION.xlsx` (the primary, section-level assignment source,
+> ** DUMMY ASSIGNMENT DATA.** `TEACHER_CLASS_ALLOCATION.xlsx` (the primary, section-level assignment source,
 > 587 rows) and `Timetable-Engine-Rules-Coverage.md` were **not supplied**. Until they are, the solver uses
 > `data/dummy/TEACHER_CLASS_ALLOCATION.DUMMY.xlsx`, synthesized from the **class-level**
 > `TEACHER_CLASS_ASSIGNMENTS.md` (rules in [§5.3](#53-dummy-workbook-how-it-is-built)). Every run that uses it says so in
@@ -56,6 +59,9 @@ relaxed in pass A2). Profile **`pragmatic`** does the same thing *optimally*, as
 
 Remaining soft penalty: PR-MATH 580 and the DB Games/Library-per-day rules 2 × 256. The latter conflict with B1 for
 2-period Games/Library blocks; see [§6.3](#63-soft-constraints-tier-3).
+
+**Persistence (verified locally).** With `Persistence:Enabled=true`, the EF Core migrations were applied to PostgreSQL,
+the application was run, and data from the run was written to and present in the database.
 
 ## 2. Quick start
 
@@ -137,6 +143,42 @@ Body for `load-data` / `generate` (all optional, validated and bounded):
 Send the key as header `X-Api-Key`. Examples are in `src/Rdpl.Timetable.Api/Rdpl.Timetable.Api.http`.
 `generate` is asynchronous because a full-school solve takes minutes.
 
+### 2.1 PostgreSQL persistence (EF Core)
+
+Optional. Without it the API keeps runs in memory, exactly as before.
+
+```bash
+# 1. EF Core CLI (once)
+dotnet tool install --global dotnet-ef
+
+# 2. Roles, database and grants (once, as a PostgreSQL superuser)
+psql -U postgres -f database/01-create-database.sql
+
+# 3. Connection string = secret, never in appsettings.json
+dotnet user-secrets set "ConnectionStrings:Timetable" \
+  "Host=localhost;Port=5432;Database=<db>;Username=rdpl_owner;Password=<pwd>" --project src/Rdpl.Timetable.Api
+
+# 4. Create the schema from the migrations (run as rdpl_owner: schema changes need the owner role)
+dotnet ef database update --project src/Rdpl.Timetable.Persistence --startup-project src/Rdpl.Timetable.Api
+
+# 5. Switch the connection string to the runtime role and turn persistence on
+dotnet user-secrets set "ConnectionStrings:Timetable" \
+  "Host=localhost;Port=5432;Database=<db>;Username=rdpl_app;Password=<pwd>" --project src/Rdpl.Timetable.Api
+export Persistence__Enabled=true
+dotnet run -c Release --project src/Rdpl.Timetable.Api --urls http://localhost:5080
+```
+
+After a model change, add a migration and apply it:
+
+```bash
+dotnet ef migrations add <Name> --project src/Rdpl.Timetable.Persistence --startup-project src/Rdpl.Timetable.Api
+dotnet ef database update     --project src/Rdpl.Timetable.Persistence --startup-project src/Rdpl.Timetable.Api
+```
+
+Check the result: `GET /health/ready` reports the database; in `psql`, `\dt` lists the tables (plus
+`__EFMigrationsHistory`), and after `POST /api/timetable/generate` the run, lessons and conflicts are in their tables.
+More detail in [docs/DATABASE.md](docs/DATABASE.md).
+
 ## 3. Project structure
 
 ```text
@@ -165,11 +207,13 @@ src/Rdpl.Timetable.Api/           ASP.NET Core host (API key, rate limit, /healt
   Infrastructure/  ApiHostingExtensions (DI + pipeline), SafeExceptionHandler (centralized errors), ApiExceptions, RouteIds
 src/Rdpl.Timetable.Persistence/   OPTIONAL PostgreSQL store (EF Core 8 + Npgsql). Off by default; Core and CLI do not reference it.
   AppDbContext.cs, Entities/, Configurations/, Options/
+  Migrations/      EF Core migrations (create the PostgreSQL schema via `dotnet ef database update`)
   Repositories/    Interfaces/ (ITimetableRepository, ISectionRepository, ITeacherRepository, IConflictRepository)
                    Implementations/ EF Core: TimetableRepository, SectionRepository, TeacherRepository, ConflictRepository
                                     in-memory (default): InMemoryRunStore + InMemory*Repository
                    Models/ (RunResult, RunRecord, NewRun, LessonRow, SectionRecord)
-database/                         01-create-database.sql (roles, database, grants), 02-create-schema.sql (tables)
+database/                         01-create-database.sql (roles, database, grants); 02-create-schema.sql (manual
+                                  alternative to the migrations — use one or the other, not both)
 tests/Rdpl.Timetable.Tests/       xUnit: per-rule CP-SAT scenarios, validator, loaders, security, full school
 data/client/                      the client package exactly as received (read-only)
 data/dummy/                       TEACHER_CLASS_ALLOCATION.DUMMY.xlsx (clearly labelled stand-in)
@@ -399,7 +443,7 @@ Samples: `output/samples/timetable-pragmatic.json` and `output/samples/timetable
 * **Logging.** No secrets and no file contents are logged; jobs are logged by id.
 * **Database (optional).** The connection string is a secret (user-secrets / `ConnectionStrings__Timetable` / Key Vault
   `ConnectionStrings--Timetable`), never in appsettings. Enabled-but-missing fails closed. The runtime role `rdpl_app`
-  has row access only; schema changes need `rdpl_owner`. EF sensitive-data logging is forced off. See
+  has row access only; schema changes (`dotnet ef database update`) run as `rdpl_owner`. EF sensitive-data logging is forced off. See
   [docs/DATABASE.md](docs/DATABASE.md).
 
 ## 11. Assumptions and missing requirements
@@ -437,7 +481,9 @@ curriculum.
 * Cancellation is checked between phases. A running CP-SAT search stops at its time limit, not on Ctrl+C.
 * Rooms (R1/R2), merged sections (M1–M6) and multi-profile bell merging beyond Mon–Thu/Fri–Sat are not implemented
   (no data). The H2/H6/H9 hooks are implemented and tested but have no client data.
-* The API keeps jobs in memory (one instance). For several instances, store reports in a database or blob storage.
+* By default the API keeps jobs in memory (one instance). With PostgreSQL persistence enabled, runs, lessons and
+  conflicts survive a restart; the "one solve at a time" lock is still per process, so several API instances would
+  need a shared lock or a job queue.
 
 ## 13. Acceptance criteria
 
@@ -453,13 +499,7 @@ curriculum.
 | AC-8 | README maps the model to Rule IDs | ✅ [§6.1](#61-rule--constraint-map-ac-8-timetable-engine-rulesmd-ids) + `ruleCoverage` in every report |
 | AC-9 | Builds and runs from README; status + wall time reported | ✅ (verified offline, see `docs/VERIFICATION.md`) |
 | Bonus | L2, L3, H9, PR-MATH soft objective | ✅ · rooms / merged sections ✗ (no data) |
+| Extra | Persistence (not required by the brief) | ✅ EF Core 8 + Npgsql; migrations applied to PostgreSQL, run data stored and verified locally |
 
-## 14. Walkthrough (for the interview)
 
-1. `validate-data`: show the dataset audit (`dataConflicts` counts) and the 82 strict proofs.
-2. `TimetableModelBuilder`: `x/y/z/u` variables; H1 couples the sections; G1/H4 are structural.
-3. Strict run: INFEASIBLE with reasons, and why (odd block counts, 7 days of English in a 6-day week).
-4. Pragmatic run: what is relaxed, by how much (80 singles = minimum, 4 L1 overlaps = minimum), and how
-   validation is independent of the solver.
-5. Swapping in the real workbook, with no code change.
 
