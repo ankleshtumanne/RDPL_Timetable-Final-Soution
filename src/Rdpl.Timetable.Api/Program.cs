@@ -1,8 +1,4 @@
 using Rdpl.Timetable.Api.Infrastructure;
-
-// Composition root only. Every endpoint lives in Controllers/; registrations live in Infrastructure/ApiHostingExtensions.
-// Request flow: Controller → Service interface → Service → Repository interface → Repository → AppDbContext → PostgreSQL
-// (or the in-memory repositories when Persistence:Enabled is false).
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddTimetableConfiguration()   // options + optional Azure Key Vault
@@ -46,8 +42,6 @@ app.UseTimetablePipeline();           // exception handler, HSTS/HTTPS, security
 app.MapTimetableEndpoints();          // controllers + /health/ready
 
 app.Run();
-
-/// <summary>Exposed for WebApplicationFactory-based tests.</summary>
 public partial class Program
 {
 }

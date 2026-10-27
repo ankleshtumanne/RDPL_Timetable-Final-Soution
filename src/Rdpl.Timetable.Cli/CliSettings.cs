@@ -4,11 +4,6 @@ using Rdpl.Timetable.Configuration;
 using Rdpl.Timetable.Data;
 
 namespace Rdpl.Timetable.Cli;
-
-/// <summary>
-/// Console settings. Precedence: command line > environment (TIMETABLE_*) > settings JSON > defaults.
-/// No secrets are needed by the console host; nothing sensitive is read or logged.
-/// </summary>
 internal sealed record CliSettings
 {
     public string AllowedRoot { get; init; } = Directory.GetCurrentDirectory();
