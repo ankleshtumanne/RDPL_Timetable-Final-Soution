@@ -2,17 +2,10 @@ namespace Rdpl.Timetable.Models;
 
 public enum ConflictSeverity
 {
-    /// <summary>Informational: data was interpreted (e.g. alias applied) but nothing was dropped.</summary>
     Info,
-
-    /// <summary>The row or item was excluded from scheduling, or the result is degraded.</summary>
     Warning,
-
-    /// <summary>The input cannot be used at all (e.g. unreadable file, section without curriculum).</summary>
     Error,
 }
-
-/// <summary>A problem found in the INPUT data (reported in dataConflicts[]; never silently dropped).</summary>
 public sealed record DataConflict(
     string Type,
     ConflictSeverity Severity,
@@ -22,8 +15,6 @@ public sealed record DataConflict(
     string? TeacherCode = null,
     string? Source = null,
     string? RuleId = null);
-
-/// <summary>A reason the scheduling problem cannot be solved (reported in schedulingConflicts[]).</summary>
 public sealed record SchedulingConflict(
     string Code,
     string RuleId,
